@@ -1,12 +1,15 @@
 /* Работа с модальными окнами */
 const modals = () => {
+    /* Пользователь не нажал ни на одну кнопку */
+    let btnPressed = false;
+
     /* Привязка модального окна к триггеру */
-    function bindModal(triggerSelector, modalSelector, closeSelector, closeClickOverlay = true) {
+    function bindModal(triggerSelector, modalSelector, closeSelector, destroy = false) {
         const trigger = document.querySelectorAll(triggerSelector),
               modal = document.querySelector(modalSelector),
               close = document.querySelector(closeSelector),
               windows = document.querySelectorAll('[data-modal]'),
-              scroll = calcScroll;
+              scroll = calcScroll();
 
 
         /* При клике на триггер, открывается модальное окно */
@@ -18,8 +21,17 @@ const modals = () => {
                     e.preventDefault();
                 }
 
+                /* Пользователь нажал на кнопку */
+                btnPressed = true;
+
+                /* Если destroy = true, то кнопка удаляется */
+                if (destroy) {
+                    item.remove();
+                }
+
                 windows.forEach(item => {
                     item.style.display = 'none';
+                    item.classList.add('animated', 'fadeIn');
                 });
 
                 /* Включаем отображение окна */
@@ -46,7 +58,7 @@ const modals = () => {
 
         /* При клике в тёмную область (за границей модального окна), модальное окно будет закрываться */
         modal.addEventListener('click', (e) => {
-            if (e.target === modal && closeClickOverlay) {
+            if (e.target === modal) {
                 windows.forEach(item => {
                     item.style.display = 'none';
                 });
@@ -76,6 +88,7 @@ const modals = () => {
                 document.querySelector(selector).style.display = 'block';
                 /* Отключаем скроллинг страницы при вызове окна */
                 document.body.style.overflow = "hidden";
+                let scroll = calcScroll();
                 document.body.style.marginRight = `${scroll}px`;
             }
             
@@ -100,9 +113,21 @@ const modals = () => {
         return scrollWidth;
     }
 
+    /* Если пользователь долистал страницу до конца, но не нажал ни одну кнопку - должно появляться модальное окно */
+    function openByScroll(selector) {
+        window.addEventListener('scroll', () => {
+            /* Если пользователь долистал страницу до конца */
+            if (!btnPressed && (window.pageYOffset + document.documentElement.clientHeight >= document.documentElement.scrollHeight)) {
+                document.querySelector(selector).click();
+            }
+        });
+    }
+
     /* Включаем скрипт не забывая прописывать селекторы */
     bindModal('.button-design', '.popup-design', '.popup-design .popup-close');
     bindModal('.button-consultation', '.popup-consultation', '.popup-consultation .popup-close');
+    bindModal('.fixed-gift', '.popup-gift', '.popup-gift .popup-close', true);
+    openByScroll('.fixed-gift');
 
     // showModalByTime('.popup-consultation', 60000);
 };
